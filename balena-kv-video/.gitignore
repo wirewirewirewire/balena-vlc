@@ -1,0 +1,7 @@
+*.wav
+*.mp4
+media/
+.vscode/settings.json
+/node_modules
+*.img
+*balenarc.*

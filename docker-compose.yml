@@ -1,0 +1,16 @@
+version: "2"
+volumes:
+  workdir:
+services:
+  balena-kv-video:
+    build: ./balena-kv-video
+    network_mode: "host"
+    ports:
+      - "8007:8007"
+    volumes:
+      - "workdir:/usr/src/app/drive"
+    privileged: true
+    labels:
+      io.resin.features.dbus: "1"
+      io.resin.features.kernel-modules: "1"
+      io.resin.features.firmware: "1"
