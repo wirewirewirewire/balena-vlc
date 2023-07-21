@@ -1,8 +1,24 @@
 version: "2"
 volumes:
   workdir:
+  settings:
 services:
-  balena-kv-video:
+  downloader:
+    build: ./balena-downloader
+    privileged: true
+    volumes:
+      - "workdir:/usr/src/app/update_live"
+    labels:
+      io.resin.features.dbus: "1"
+      io.resin.features.kernel-modules: "1"
+      io.resin.features.firmware: "1"
+  browser:
+    build: ./browser
+    privileged: true # required for UDEV to find plugged in peripherals such as a USB mouse
+    network_mode: host
+    volumes:
+      - 'settings:/data' # Only required if using PERSISTENT flag (see below)
+  worker:
     build: ./balena-kv-video
     network_mode: "host"
     ports:

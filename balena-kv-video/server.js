@@ -1,92 +1,37 @@
 const util = require("util");
 var path = require("path");
 var fs = require("fs");
+const { WebSocket } = require("ws");
 
 let debug = false;
-const UNIPI_IP = "192.168.100.66";
+//const UNIPI_IP = "192.168.188.21";
+const UNIPI_IP = "192.168.225.143"
+let commandInput = undefined;
+let fadeValue = undefined;
 
-const http = require("http");
-const { WebSocketServer } = require("ws");
-const { v4 } = require("uuid");
-const inquirer = require("inquirer");
-var EventEmitter = require("events").EventEmitter;
-var theEvent = new EventEmitter();
+const ws = new WebSocket("ws://" + UNIPI_IP + ":8007");
 
-const server = http.createServer();
-const wsServer = new WebSocketServer({ server });
-
-// I'm maintaining all active connections in this object
-const clients = {};
-
-const questions = [
-  {
-    type: "input",
-    name: "key",
-    message: "Enter a key",
-  },
-];
-
-function getAnswers() {
-  return inquirer.prompt(questions).then((answers) => {
-    theEvent.emit("validationDone", answers);
-    return getAnswers();
-  });
-}
-
-getAnswers()
-  .then(console.log)
-  .catch((error) => {});
-
-// A new client connection request received
-wsServer.on("connection", function (connection) {
-  theEvent.on("validationDone", function (validationResult) {
-    connection.send(
-      JSON.stringify({ type: "keypress", userId, ...validationResult })
-    );
-
-    console.log("validation result is " + validationResult);
-  });
-
-  connection.on('message', function message(data) {
-    console.log('received: %s', data);
-  });
-  
-
-  const userId = v4();
-  console.log(`Recieved a new connection.`);
-
-  connection.send(JSON.stringify({ type: "userId", userId }));
-
-  // Store the new connection and handle messages
-  clients[userId] = connection;
-  console.log(`${userId} connected.`);
+ws.on("message", function message(data) {
+  console.log("Message: " + data);
+  //ws.send(JSON.stringify({ command: "lcstart" }));
 });
 
-const port = 8007;
-server.listen(port, () => {
-  console.log(`WebSocket server is running on port ${port}`);
+ws.on("open", function open() {
+  //ws.send(JSON.stringify({ command: "lcoff" }));
+  sendData = process.argv[2];
+
+  if (commandInput != undefined) {
+    console.log("Sending: { command: " + commandInput + " }");
+    ws.send(JSON.stringify({ command: commandInput }));
+  }
+
+  if (fadeValue != undefined) {
+    console.log("Sending: { fadeValue: " + fadeValue + " }");
+    ws.send(JSON.stringify({ command: "lcstart", value: fadeValue }));
+  }
+
+  //process.exit(0);
 });
-
-
-
-
-delay = async (time) => {
-  return new Promise(async (resolve, reject) => {
-    setTimeout(resolve(true), time);
-  });
-};
-
-test = async () => {
-console.log("[SYSTEM] start");
-};
-
-
-
-
-if (process.argv.indexOf("-d") > -1) {
-  console.log("[START] -d startup with debug");
-  debug = true;
-}
 
 if (debug) {
   process.argv.forEach(function (val, index, array) {
@@ -94,17 +39,23 @@ if (debug) {
   });
 }
 
-/*
-
-if (process.argv.indexOf("-a") > -1) {
-  let index = process.argv.indexOf("-a");
-  analogTestValue = process.argv[index + 1];
-  console.log("[START] -a analog value set: " + analogTestValue);
+if (process.argv.indexOf("-d") > -1) {
+  console.log("[START] -d startup with debug");
+  debug = true;
 }
-*/
 
+if (process.argv.indexOf("-c") > -1) {
+  let index = process.argv.indexOf("-c");
+  commandInput = process.argv[index + 1];
+  console.log("[START] -c command set: " + commandInput);
+}
 
-test();
+if (process.argv.indexOf("-f") > -1) {
+  let index = process.argv.indexOf("-f");
+  fadeValue = process.argv[index + 1];
+  console.log("[START] -f fade the glass with time: " + fadeValue);
+  testRun = true;
+}
 
 process.on("SIGINT", (_) => {
   console.log("SIGINT");

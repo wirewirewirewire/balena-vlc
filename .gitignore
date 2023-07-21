@@ -17,3 +17,5 @@ node_modules/
 balenarc.yml
 *config.json
 *balenarc.*
+balena-downloader
+browser

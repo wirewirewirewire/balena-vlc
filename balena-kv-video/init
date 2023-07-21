@@ -4,6 +4,8 @@ DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket   dbus-send  
 
 sleep 1
 
+nodemon server.js
+
 while true; do    
     echo "Running"
     sleep 120
