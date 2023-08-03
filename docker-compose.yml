@@ -2,31 +2,44 @@ version: "2"
 volumes:
   workdir:
   settings:
+  vlc:
 services:
-  downloader:
-    build: ./balena-downloader
-    privileged: true
-    volumes:
-      - "workdir:/usr/src/app/update_live"
-    labels:
-      io.resin.features.dbus: "1"
-      io.resin.features.kernel-modules: "1"
-      io.resin.features.firmware: "1"
-  browser:
-    build: ./browser
+  #  downloader:
+  #    build: ./balena-downloader
+  #    privileged: true
+  #    volumes:
+  #      - "workdir:/usr/src/app/update_live"
+  #    labels:
+  #      io.resin.features.dbus: "1"
+  #      io.resin.features.kernel-modules: "1"
+  #      io.resin.features.firmware: "1"
+  #browser:
+  #  build: ./browser
+  #  privileged: true # required for UDEV to find plugged in peripherals such as a USB mouse
+  #  network_mode: host
+  #  volumes:
+  #    - "settings:/data" # Only required if using PERSISTENT flag (see below)
+  vlc:
+    build: ./vlc
     privileged: true # required for UDEV to find plugged in peripherals such as a USB mouse
     network_mode: host
     volumes:
-      - 'settings:/data' # Only required if using PERSISTENT flag (see below)
-  worker:
-    build: ./balena-kv-video
-    network_mode: "host"
-    ports:
-      - "8007:8007"
-    volumes:
-      - "workdir:/usr/src/app/drive"
-    privileged: true
+      - "vlc:/code/drive" # Only required if using PERSISTENT flag (see below)
     labels:
       io.resin.features.dbus: "1"
       io.resin.features.kernel-modules: "1"
       io.resin.features.firmware: "1"
+      io.balena.features.supervisor-api: "1"
+#  worker:
+#    build: ./balena-kv-video
+#    network_mode: "host"
+#    ports:
+#      - "8007:8007"
+#    volumes:
+#      - "workdir:/usr/src/app/drive"
+#    privileged: true
+#    labels:
+#      io.resin.features.dbus: "1"
+#      io.resin.features.kernel-modules: "1"
+#      io.resin.features.firmware: "1"
+#      io.balena.features.supervisor-api: "1"
