@@ -19,3 +19,4 @@ balenarc.yml
 *balenarc.*
 balena-downloader
 browser
+*.bak*
