@@ -1,4 +1,0 @@
-{
-  "watch": ["server.js", "wsclient.js"],
-  "ext": "js, css"
-}
