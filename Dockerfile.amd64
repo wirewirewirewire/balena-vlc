@@ -1,32 +1,67 @@
-# Force Raspberry Pi 3 for 32-bit X
+# build vlc nightly
+FROM balenalib/%%BALENA_MACHINE_NAME%%:bullseye-build AS vlcbuild
+
+WORKDIR /usr/src/app
+
+RUN echo "deb-src http://deb.debian.org/debian/ bullseye main contrib non-free" | sudo tee -a /etc/apt/sources.list
+
+RUN install_packages git build-essential pkg-config libtool flex bison\
+  autoconf automake autopoint gettext cmake yasm \
+  liba52-0.7.4-dev libmpeg2-4-dev libmad0-dev \
+  libogg-dev libvorbis-dev libflac-dev libtheora-dev libdca-dev \
+  libfaad-dev libavcodec-dev libavformat-dev libpostproc-dev libavutil-dev \
+  libdvdnav-dev libdvdread-dev libswscale-dev libbluray-dev libvpx-dev \
+  libx264-dev libx265-dev libopus-dev \
+  lua5.2 liblua5.1-0-dev lua5.1 \
+  xcb libxcb1-dev libxcb-shm0-dev libxcb-render0-dev \
+  libxcb-composite0-dev libxcb-randr0-dev libxcb-xkb-dev \
+  qtbase5-dev qtquickcontrols2-5-dev qtdeclarative5-dev libqt5svg5-dev \
+  libx11-dev xserver-xorg-input-evdev xserver-xorg-core \
+  xinit lxsession x11-xserver-utils libasound2-dev alsa-utils \
+  libgl1-mesa-dri libglx-mesa0 mesa-vulkan-drivers xserver-xorg-video-all \
+  libqt5x11extras5 libqt5x11extras5-dev checkinstall
+
+RUN install_packages devscripts debhelper autotools-dev libgtk-3-dev intltool yasm
+RUN apt update && apt-get build-dep vlc
+
+
+RUN git clone https://code.videolan.org/videolan/vlc.git
+RUN cd vlc && ./bootstrap && ./configure && make && make install && \
+  checkinstall -D --pkgname=vlc --pkgversion=4.0 --pkggroup=multimedia --requires="libvlc-dev,vlc-plugin-*" --backup=no -y make install
+
 #FROM balenalib/raspberrypi3:buster
 #FROM balenalib/%%BALENA_MACHINE_NAME%%-node:16-bullseye-run
 FROM balenalib/%%BALENA_MACHINE_NAME%%-node:16-bullseye-run
 
-# Use `install_packages` for dependencies
-RUN install_packages vlc vlc-plugin-* g++ build-essential \
+RUN install_packages \
   xserver-xorg-core \
   xinit lxsession desktop-file-utils \
-  #raspberrypi-ui-mods rpd-icons \
-  #gtk2-engines-clearlookspix \
-  matchbox-keyboard \
-  #chromium \
-  # For system volume
-  libasound2-dev \
+  xserver-xorg-input-evdev \
+  x11-xserver-utils \
   # Audio
   alsa-utils \
+  libasound2-dev \
+  # video
+  libgl1-mesa-dri \
+  libglx-mesa0 \
+  mesa-vulkan-drivers \
+  xserver-xorg-video-all\
+  pciutils \
+  chromium\
   # Remove cursor
   unclutter
+#vlc vlc-plugin-* \
+#raspberrypi-ui-mods rpd-icons \
+#gtk2-engines-clearlookspix \
+#matchbox-keyboard \
+#libgles2-mesa libgles2-mesa-dev xorg-dev
 
 # disable lxpolkit popup warning
 RUN mv /usr/bin/lxpolkit /usr/bin/lxpolkit.bak
 
-RUN install_packages chromium
-#RUN install_packages libgles2-mesa libgles2-mesa-dev xorg-dev
-
 RUN useradd chromium -m -s /bin/bash -G root || true && \
-    groupadd -r -f chromium && id -u chromium || true \
-    && chown -R chromium:chromium /home/chromium || true
+  groupadd -r -f chromium && id -u chromium || true \
+  && chown -R chromium:chromium /home/chromium || true
 
 RUN ln -s /usr/bin/chromium /usr/bin/chromium-browser || true
 
@@ -46,12 +81,14 @@ RUN echo "#!/bin/bash" > /etc/X11/xinit/xserverrc \
   && echo "" >> /etc/X11/xinit/xserverrc \
   && echo 'exec /usr/bin/X -s 0 dpms -nolisten tcp "$@"' >> /etc/X11/xinit/xserverrc
 
-# Enable udevd so that plugged dynamic hardware devices show up in our container.
 ENV UDEV 1
 
-
-COPY . /code/
 WORKDIR /code/
+COPY . /code/
 
-# pi.sh will run when the container starts up on the device
+#load vlc nightly from build container
+RUN install_packages libvlc-dev vlc-plugin-*
+COPY --from=vlcbuild /usr/src/app/vlc/vlc_4.0-1_amd64.deb .
+#RUN dpkg -i ./vlc_4.0-1_amd64.deb
+
 CMD ["bash","scripts/start.sh"]
