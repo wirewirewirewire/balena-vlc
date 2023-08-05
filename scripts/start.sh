@@ -71,7 +71,7 @@ xrandr -display :0 --output DisplayPort-2 --set TearFree on || true
 if [[ -n "$CHROME_TEST" ]]
 then
   echo "CHROME_TEST is set, start browser"
-  DISPLAY=:0 chromium-browser --no-sandbox --enable-zero-copy --num-raster-threads=4 --ignore-gpu-blacklist --enable-gpu-rasterization --kiosk --start-fullscreen --disable-features=Translate --window-size=1920,1080 file:///code/test.mp4
+  DISPLAY=:0 chromium-browser --no-sandbox --enable-zero-copy --num-raster-threads=4 --ignore-gpu-blacklist --enable-gpu-rasterization --disable-features=Translate --window-size=1920,1080 google.de
   balena-idle
 fi
 

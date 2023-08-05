@@ -27,7 +27,7 @@ RUN apt update && apt-get build-dep vlc
 
 RUN git clone https://code.videolan.org/videolan/vlc.git
 RUN cd vlc && ./bootstrap && ./configure && make && make install && \
-  checkinstall -D --pkgname=vlc --pkgversion=4.0 --pkggroup=multimedia --requires="libvlc-dev,vlc-plugin-*" --backup=no -y make install
+  checkinstall -D --pkgname=vlc --pkgversion=4.0 --pkggroup=multimedia --requires="" --backup=no -y make install
 
 #FROM balenalib/raspberrypi3:buster
 #FROM balenalib/%%BALENA_MACHINE_NAME%%-node:16-bullseye-run
@@ -87,8 +87,8 @@ WORKDIR /code/
 COPY . /code/
 
 #load vlc nightly from build container
-RUN install_packages libvlc-dev vlc-plugin-*
 COPY --from=vlcbuild /usr/src/app/vlc/vlc_4.0-1_amd64.deb .
-#RUN dpkg -i ./vlc_4.0-1_amd64.deb
+RUN dpkg -i ./vlc_4.0-1_amd64.deb
+RUN install_packages libvlc-dev vlc-plugin-*
 
 CMD ["bash","scripts/start.sh"]
