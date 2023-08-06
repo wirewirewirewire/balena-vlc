@@ -78,7 +78,7 @@ fi
 if [[ -n "$VLC_TEST" ]]
   then
   echo "VLC_TEST is set, start vlc"
-    DISPLAY=:0 cvlc --loop -f --no-osd --no-audio test.mp4
+    DISPLAY=:0 cvlc --loop -f --no-osd --no-audio --control dbus test.mp4
     balena-idle
 fi
 

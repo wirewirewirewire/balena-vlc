@@ -25,8 +25,8 @@ RUN install_packages raspberrypi-ui-mods chromium-browser
 RUN install_packages libgles2-mesa libgles2-mesa-dev xorg-dev
 
 RUN useradd chromium -m -s /bin/bash -G root || true && \
-    groupadd -r -f chromium && id -u chromium || true \
-    && chown -R chromium:chromium /home/chromium || true
+  groupadd -r -f chromium && id -u chromium || true \
+  && chown -R chromium:chromium /home/chromium || true
 
 # Set wallpaper
 #COPY /conf/desktop-items-0.conf /root/.config/pcmanfm/LXDE-pi/
@@ -51,4 +51,5 @@ COPY . /code/
 WORKDIR /code/
 
 # pi.sh will run when the container starts up on the device
+RUN sed -i -e 's/\r$//' scripts/start.sh
 CMD ["bash","scripts/start.sh"]

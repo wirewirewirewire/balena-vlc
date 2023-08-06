@@ -1,55 +1,117 @@
 const util = require("util");
 var path = require("path");
 var fs = require("fs");
-//const spawn = require("child_process").spawn;
-const { spawn } = require("child_process");
+const dbus = require("dbus-native");
+const { spawn, exec } = require("child_process");
 
+const getVlcTimeCmd = `DISPLAY=:0 dbus-send --print-reply --session --dest=org.mpris.MediaPlayer2.vlc /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:"org.mpris.MediaPlayer2.Player" string:"Position"`;
+const getDbusRunning =
+  "DISPLAY=:0 dbus-send --session --dest=org.freedesktop.DBus --type=method_call --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames";
 const env = Object.create(process.env);
 env.DISPLAY = ":0";
 
-let debug = false;
+let DEBUG = false;
 var playerRunner = undefined;
-
-console.log("Starting server.js");
 
 let launchVlc = async function () {
   return new Promise(async (resolve, reject) => {
     console.log("Launching player");
-    var player = spawn("vlc", ["-f", "--no-osd", "--no-audio", "../test.mp4", "-I", "rc"], { env: env });
+    var player = spawn("vlc", ["-f", "--no-osd", "--no-audio", "--control", "dbus", "../test.mp4"], { env: env });
 
     player.stdout.on("data", (data) => {
       console.error(`stdout: ${data}`);
-      /*const output = data.toString().trim();
-      if (output.startsWith("status change:")) {
-        return; // Ignore status change messages
-      }
-      console.log(`Current time: ${output} seconds`);*/
     });
 
     player.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
+      if (DEBUG) console.error(`stderr: ${data}`);
     });
 
     player.on("close", (code) => {
       console.log(`child process exited with code ${code}`);
     });
     resolve(player);
-    //return player;
   });
-  //return spawn.bind(null, "/usr/bin/cvlc").apply(null, arguments);
+};
+
+let getVlcTime = async function () {
+  return new Promise(async (resolve, reject) => {
+    console.log("Launching time get");
+    exec(getVlcTimeCmd, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Error: ${error.message}`);
+        resolve(false);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        resolve(false);
+        return;
+      }
+      if (DEBUG) console.log(`stdout: ${stdout}`);
+      let match = stdout.match(/(\d+)(?![\s\S]*\d)/);
+      let lastNumber = match ? match[0] : null;
+      lastNumber = Math.floor(lastNumber / 1000);
+      resolve(lastNumber);
+    });
+  });
+};
+
+let getDbus = async function () {
+  return new Promise(async (resolve, reject) => {
+    console.log("Launching time get");
+
+    exec(getDbusRunning, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Error: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+      console.log(`stdout: ${stdout}`);
+    });
+    resolve();
+  });
+};
+
+let getDbusAddress = async function () {
+  return new Promise(async (resolve, reject) => {
+    console.log("Launching time get");
+
+    exec("dbus-daemon --session --fork --print-address", (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Error: ${error.message}`);
+        resolve(false);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        resolve(false);
+        return;
+      }
+      resolve(stdout);
+    });
+  });
 };
 
 async function run() {
-  setTimeout(() => {
-    console.log("Sending get_time_precise");
-    playerRunner.stdin.write("get_time\n");
-  }, 6000);
   playerRunner = await launchVlc();
+
+  setTimeout(async () => {
+    var time = await getVlcTime();
+    console.log("VLC Player Time: " + time);
+  }, 5550);
 }
+
+console.log("Starting server.js");
 run();
 
 process.on("SIGINT", (_) => {
   console.log("SIGINT");
-  playerRunner.kill();
+  if (playerRunner != undefined) {
+    playerRunner.kill();
+  }
+
   process.exit(0);
 });

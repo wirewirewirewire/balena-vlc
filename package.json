@@ -1,0 +1,18 @@
+{
+  "name": "balena-vlc",
+  "version": "1.0.0",
+  "description": "UniPi Server Websocket",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "deploy": "balena deploy --build pi4dev",
+    "deploy:build": "balena deploy --build --nocache pi4dev"
+  },
+  "author": "Daniel",
+  "license": "Apache-2.0",
+  "dependencies": {},
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "dbus-native": "^0.4.0"
+  }
+}

@@ -38,6 +38,7 @@ RUN install_packages \
   xinit lxsession desktop-file-utils \
   xserver-xorg-input-evdev \
   x11-xserver-utils \
+  dbus-x11 \
   # Audio
   alsa-utils \
   libasound2-dev \
@@ -87,8 +88,13 @@ WORKDIR /code/
 COPY . /code/
 
 #load vlc nightly from build container
-COPY --from=vlcbuild /usr/src/app/vlc/vlc_4.0-1_amd64.deb .
-RUN dpkg -i ./vlc_4.0-1_amd64.deb
-RUN install_packages libvlc-dev vlc-plugin-*
+#COPY --from=vlcbuild /usr/src/app/vlc/vlc_4.0-1_amd64.deb .
+#RUN dpkg -i ./vlc_4.0-1_amd64.deb
+#RUN install_packages libvlc-dev vlc-plugin-*
 
+#load normal vlc
+RUN install_packages vlc vlc-plugin-* 
+
+
+RUN sed -i -e 's/\r$//' scripts/start.sh
 CMD ["bash","scripts/start.sh"]
