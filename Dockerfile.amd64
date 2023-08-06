@@ -48,6 +48,7 @@ RUN install_packages \
   mesa-vulkan-drivers \
   xserver-xorg-video-all\
   pciutils \
+  htop \
   chromium\
   # Remove cursor
   unclutter

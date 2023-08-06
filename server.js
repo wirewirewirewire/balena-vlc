@@ -13,10 +13,20 @@ env.DISPLAY = ":0";
 let DEBUG = false;
 var playerRunner = undefined;
 
-let launchVlc = async function () {
+let vlcPlayFile = async function (file, loop = false, audio = false) {
+  var fileName = file;
+  playerParams = ["-f", "--no-osd", "--control", "dbus"];
+  if (loop) {
+    playerParams.push("--loop");
+  }
+  if (!audio) {
+    playerParams.push("--no-audio");
+  }
+  playerParams.push(fileName);
+
   return new Promise(async (resolve, reject) => {
     console.log("Launching player");
-    var player = spawn("vlc", ["-f", "--no-osd", "--no-audio", "--control", "dbus", "../test.mp4"], { env: env });
+    var player = spawn("vlc", ["-f", "--no-osd", "--no-audio", "--control", "dbus", fileName], { env: env });
 
     player.stdout.on("data", (data) => {
       console.error(`stdout: ${data}`);
@@ -33,7 +43,7 @@ let launchVlc = async function () {
   });
 };
 
-let getVlcTime = async function () {
+let vlcGetTime = async function () {
   return new Promise(async (resolve, reject) => {
     console.log("Launching time get");
     exec(getVlcTimeCmd, (error, stdout, stderr) => {
@@ -96,10 +106,10 @@ let getDbusAddress = async function () {
 };
 
 async function run() {
-  playerRunner = await launchVlc();
+  playerRunner = await vlcPlayFile("../test.mp4");
 
   setTimeout(async () => {
-    var time = await getVlcTime();
+    var time = await vlcGetTime();
     console.log("VLC Player Time: " + time);
   }, 5550);
 }
