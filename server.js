@@ -1,7 +1,6 @@
 const util = require("util");
 var path = require("path");
 var fs = require("fs");
-const dbus = require("dbus-native");
 const { spawn, exec } = require("child_process");
 
 const getVlcTimeCmd = `DISPLAY=:0 dbus-send --print-reply --session --dest=org.mpris.MediaPlayer2.vlc /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:"org.mpris.MediaPlayer2.Player" string:"Position"`;
@@ -26,7 +25,7 @@ let vlcPlayFile = async function (file, loop = false, audio = false) {
 
   return new Promise(async (resolve, reject) => {
     console.log("Launching player");
-    var player = spawn("vlc", ["-f", "--no-osd", "--no-audio", "--control", "dbus", fileName], { env: env });
+    var player = spawn("cvlc", ["-f", "--no-osd", "--no-audio", "--control", "dbus", fileName], { env: env });
 
     player.stdout.on("data", (data) => {
       console.error(`stdout: ${data}`);
@@ -106,7 +105,7 @@ let getDbusAddress = async function () {
 };
 
 async function run() {
-  playerRunner = await vlcPlayFile("../test.mp4");
+  playerRunner = await vlcPlayFile("./test.mp4");
 
   setTimeout(async () => {
     var time = await vlcGetTime();
