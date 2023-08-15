@@ -1,0 +1,82 @@
+#FROM balenalib/raspberrypi3:buster
+#FROM balenalib/%%BALENA_MACHINE_NAME%%-node:16-bullseye-run
+FROM balenalib/raspberrypi3-node:16-bullseye-run
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  vlc \
+  python3 \
+  build-essential \
+  dbus-x11 htop \
+  dbus && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN install_packages \
+  matchbox-window-manager \
+  x11-xserver-utils \
+  x11-utils \
+  xauth \
+  xinit \
+  xinput \
+  xserver-xorg \
+  xserver-xorg-input-all \
+  xserver-xorg-input-evdev \
+  xserver-xorg-legacy \
+  xserver-xorg-video-all
+
+#drivers to install
+RUN install_packages \
+  libgles2-mesa \
+  mesa-vdpau-drivers \
+  xserver-xorg-video-fbdev \
+  libgl1-mesa-dri \
+  libglx-mesa0 \
+  mesa-vulkan-drivers \
+  mesa-va-drivers \
+  alsa-utils \
+  libasound2-dev \
+  pulseaudio \
+  xterm
+
+# disable lxpolkit popup warning
+
+RUN useradd chromium -m -s /bin/bash -G root || true && \
+  groupadd -r -f chromium && id -u chromium || true \
+  && chown -R chromium:chromium /home/chromium || true
+
+RUN ln -s /usr/bin/chromium /usr/bin/chromium-browser || true
+
+
+# Set wallpaper
+#COPY /conf/desktop-items-0.conf /root/.config/pcmanfm/LXDE-pi/
+
+# Autohide desktop panel
+#COPY /conf/panel /root/.config/lxpanel/LXDE-pi/panels/
+
+# Hide desktop panel completely
+#COPY /conf/autostart /etc/xdg/lxsession/LXDE-pi/
+#COPY /conf/autostart /root/.config/lxsession/LXDE-pi/
+
+# Disable screen from turning it off
+RUN echo "#!/bin/bash" > /etc/X11/xinit/xserverrc \
+  && echo "" >> /etc/X11/xinit/xserverrc \
+  && echo 'exec /usr/bin/X -s 0 dpms -nolisten tcp "$@"' >> /etc/X11/xinit/xserverrc
+
+ENV UDEV 1
+
+WORKDIR /code/
+COPY . /code/
+
+#load vlc nightly from build container
+#COPY --from=vlcbuild /usr/src/app/vlc/vlc_4.0-1_amd64.deb .
+#RUN dpkg -i ./vlc_4.0-1_amd64.deb
+#RUN install_packages libvlc-dev vlc-plugin-*
+
+#load normal vlc
+RUN install_packages vlc vlc-plugin-* 
+
+ENV DISPLAY=:0
+ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
+
+
+RUN sed -i -e 's/\r$//' scripts/start.sh
+CMD ["bash","scripts/start.sh"]

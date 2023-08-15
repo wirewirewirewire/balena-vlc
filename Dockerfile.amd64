@@ -1,0 +1,68 @@
+#FROM balenalib/raspberrypi3:buster
+#FROM balenalib/%%BALENA_MACHINE_NAME%%-node:16-bullseye-run
+FROM balenalib/%%BALENA_MACHINE_NAME%%-node:16-bullseye-run
+
+RUN install_packages \
+  xserver-xorg-core \
+  xinit lxsession desktop-file-utils \
+  xserver-xorg-input-evdev \
+  x11-xserver-utils \
+  dbus-x11 \
+  # Audio
+  alsa-utils \
+  libasound2-dev \
+  # video
+  libgl1-mesa-dri \
+  libglx-mesa0 \
+  mesa-vulkan-drivers \
+  xserver-xorg-video-all\
+  pciutils \
+  # Remove cursor
+  unclutter
+#vlc vlc-plugin-* \
+#raspberrypi-ui-mods rpd-icons \
+#gtk2-engines-clearlookspix \
+#matchbox-keyboard \
+#libgles2-mesa libgles2-mesa-dev xorg-dev
+
+# disable lxpolkit popup warning
+RUN mv /usr/bin/lxpolkit /usr/bin/lxpolkit.bak
+
+RUN useradd chromium -m -s /bin/bash -G root || true && \
+  groupadd -r -f chromium && id -u chromium || true \
+  && chown -R chromium:chromium /home/chromium || true
+
+RUN ln -s /usr/bin/chromium /usr/bin/chromium-browser || true
+
+
+# Set wallpaper
+#COPY /conf/desktop-items-0.conf /root/.config/pcmanfm/LXDE-pi/
+
+# Autohide desktop panel
+#COPY /conf/panel /root/.config/lxpanel/LXDE-pi/panels/
+
+# Hide desktop panel completely
+#COPY /conf/autostart /etc/xdg/lxsession/LXDE-pi/
+#COPY /conf/autostart /root/.config/lxsession/LXDE-pi/
+
+# Disable screen from turning it off
+RUN echo "#!/bin/bash" > /etc/X11/xinit/xserverrc \
+  && echo "" >> /etc/X11/xinit/xserverrc \
+  && echo 'exec /usr/bin/X -s 0 dpms -nolisten tcp "$@"' >> /etc/X11/xinit/xserverrc
+
+ENV UDEV 1
+
+WORKDIR /code/
+COPY . /code/
+
+#load vlc nightly from build container
+#COPY --from=vlcbuild /usr/src/app/vlc/vlc_4.0-1_amd64.deb .
+#RUN dpkg -i ./vlc_4.0-1_amd64.deb
+#RUN install_packages libvlc-dev vlc-plugin-*
+
+#load normal vlc
+RUN install_packages vlc vlc-plugin-* 
+
+
+RUN sed -i -e 's/\r$//' scripts/start.sh
+CMD ["bash","scripts/start.sh"]

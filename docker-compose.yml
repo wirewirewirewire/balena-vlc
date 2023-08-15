@@ -1,17 +1,13 @@
 version: "2"
 volumes:
   vlc:
-  xserver:
 services:
   vlc:
-    build: ./balena-vlc
-    devices:
-      - /dev/dri # needs exteral xserver running https://github.com/wirewirewirewire/xserver
-    group_add:
-      - video # needs exteral xserver running https://github.com/wirewirewirewire/xserver
+    build: .
+    privileged: true # required for UDEV to find plugged in peripherals such as a USB mouse
+    network_mode: host
     volumes:
       - "vlc:/code/drive" # Only required if using PERSISTENT flag (see below)
-      - "xserver:/tmp/.X11-unix" # needs exteral xserver running https://github.com/wirewirewirewire/xserver
     labels:
       io.resin.features.dbus: "1"
       io.resin.features.kernel-modules: "1"
